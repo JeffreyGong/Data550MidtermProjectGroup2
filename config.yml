@@ -1,0 +1,24 @@
+default:
+  conference: "ALL"
+  team: "ALL"
+  position: "ALL"
+  
+west:
+  conference: "West"
+  team: "ALL"
+  position: "ALL"
+  
+east: 
+  conference: "East"
+  team: "ALL"
+  position: "ALL"
+
+one_team:
+  conference: "ALL"
+  team: "CUSTOM"
+  position: "ALL"
+  
+one_position:
+  conference: "ALL"
+  team: "ALL"
+  position: "CUSTOM"

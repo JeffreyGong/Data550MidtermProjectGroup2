@@ -1,0 +1,11 @@
+---
+title: "Data 550 Midterm Report: NBA Stats"
+author: "Midterm Group 2"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r}
+
+```
+

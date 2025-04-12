@@ -1,0 +1,7 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+Clean_Data/*.rds
+*.html
+*.Rproj
