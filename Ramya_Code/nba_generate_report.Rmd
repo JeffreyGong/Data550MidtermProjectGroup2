@@ -1,0 +1,384 @@
+---
+title: "Analyzing NBA Player Performance: Age Groups and Regression Insights"
+author: "Ramya Rajendran"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    theme: cosmo
+    df_print: paged
+---
+
+``` {r intial_setup, echo = FALSE}
+# Set default knitr options to suppress output, warnings, and messages for a cleaner rendered document -->
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE)
+```
+
+```{r load_libraries} 
+# Load essential libraries for data reading, manipulation, visualization, and report generation
+suppressPackageStartupMessages({
+  library(readr)      # For reading CSV files
+  library(dplyr)      # For data manipulation (filtering, mutating, summarizing, etc.)
+  library(ggplot2)    # For creating visualizations
+  library(knitr)      # For rendering tables with kable
+  library(stringr)    # For working with strings
+  library(glue)       # For embedding expressions inside strings
+  library(tidyverse)  # Collection of core data science packages
+  library(tibble)     # Enhanced version of data.frame
+  library(here)       # Constructs file paths relative to the project root
+  library(kableExtra) # Load kableExtra for enhanced table formatting
+  library(htmltools) # Load package to help create HTML content
+})
+```
+
+```{r config_and_load_data, message = FALSE}
+
+# Uncomment only ONE block below depending on what you want to test
+
+# --- Use full dataset (no filtering)
+Sys.setenv(WHICH_CONFIG = "default")
+
+# --- Filter for Western Conference#
+# Sys.setenv(WHICH_CONFIG = "east")
+
+# --- Filter for one specific team (e.g., LAL)
+# Sys.setenv(WHICH_CONFIG = "one_team", TEAM = "LAL")
+
+# --- Filter for one specific position (e.g., PG)
+# Sys.setenv(WHICH_CONFIG = "one_position", POS = "PG")
+
+WHICH_CONFIG = Sys.getenv("WHICH_CONFIG")
+
+# Reload config
+config_list <- config::get(config = WHICH_CONFIG)
+
+
+# Correct label assignments with CUSTOM handling
+conference_label <- config_list$conference
+team_label <- ifelse(config_list$team == "CUSTOM",
+                     Sys.getenv("TEAM"),
+                     config_list$team)
+position_label <- ifelse(config_list$position == "CUSTOM",
+                         Sys.getenv("POS"),
+                         config_list$position)
+
+# Styled display of filtering summary
+htmltools::tagList(
+  tags$div(
+    style = "font-size: 22px; font-weight: bold; text-align: center; background-color: #f0f0f0; padding: 15px; border-radius: 8px; margin-bottom: 20px;",
+    glue::glue(
+      "📌 Data filtered for: {conference_label} Conference, Team: {team_label}, Position: {position_label}"
+    )
+  )
+)
+
+# Set the project root
+here::i_am("Ramya_Code/nba_generate_report.Rmd")
+
+
+# Source the script that filters data and saves filtered RDS
+source(here::here("Jeffrey_Code/filter_data.R"))
+
+# Load the filtered dataset
+input_path <- here::here("Clean_Data", "data.rds")
+
+
+if (file.exists(input_path)) {
+  nba_data <- readRDS(input_path)
+  message("[INFO] Filtered data loaded successfully from: ", input_path)
+} else {
+  stop("[ERROR] Filtered file not found at: ", input_path)
+}
+
+ 
+```
+
+# ⏱️ Average Minutes Played per Game by Age Group
+
+This chart visualizes how average playing time (in minutes per game, or MPG) varies across different NBA player age groups. Players are categorized into five age brackets: **Under 22**, **22–25**, **26–29**, **30–33**, and **34+**. The MPG metric is calculated by dividing total minutes played (MP) by games played (G), providing a normalized view of player activity regardless of season length or injury.
+
+Each bar represents the average MPG for players in a given age group, offering insights into which age ranges tend to play more or less on average. This can reflect team strategies, player endurance, injury risk, and role on the roster (e.g., veteran leadership vs. developing prospects).
+
+Importantly, this plot is dynamically filtered based on user-defined criteria in the `config.yml` file. The displayed values will automatically update depending on the selected **conference**, **team**, and **position**. This makes it easy to explore patterns for specific player subsets—for instance, comparing MPG trends for Western Conference point guards vs. Eastern Conference forwards.
+
+Use this visualization to explore questions such as:
+- Do older players tend to play fewer minutes?
+- Which age group logs the most playing time across different teams or positions?
+
+
+```{r age_group_analysis }
+# Calculate MPG and assign age groups
+nba_data <- nba_data %>%
+  filter(G > 0) %>%
+  mutate(
+    MPG = MP / G,
+    AgeGroup = case_when(
+      Age < 22             ~ "Under 22",
+      Age >= 22 & Age < 26 ~ "22–25",
+      Age >= 26 & Age < 30 ~ "26–29",
+      Age >= 30 & Age < 34 ~ "30–33",
+      Age >= 34            ~ "34+",
+      TRUE                 ~ NA_character_
+    )
+  )
+
+# Summarize average MPG by age group
+age_mins <- nba_data %>%
+  filter(!is.na(AgeGroup)) %>%
+  group_by(AgeGroup) %>%
+  summarize(`Average Minutes per Game` = round(mean(MPG, na.rm = TRUE), 1),
+            .groups = "drop") %>%
+  arrange(desc(`Average Minutes per Game`)) %>%
+  rename(`Age Group` = AgeGroup)
+
+
+# Build dynamic table caption
+
+table_caption <- glue::glue(
+  "🎯 Average Minutes Played per Game by Age Group\nConference: {conference_label} | Team: {team_label} | Position: {position_label}"
+)
+
+
+# Create styled table
+kable(age_mins, format = "html", caption = table_caption) %>%
+  kable_styling(
+    bootstrap_options = c("hover", "condensed", "responsive"),
+    full_width = F,
+    position = "center",
+    font_size = 14
+  ) %>%
+  column_spec(1,
+              bold = TRUE,
+              width = "10em",
+              extra_css = "text-align: center;") %>%
+  column_spec(
+    2,
+    width = "15em",
+    background = spec_color(age_mins$`Average Minutes per Game`, end = 0.8),
+    color = "white",
+    bold = TRUE,
+    extra_css = "text-align: center; border-radius: 6px; padding: 4px;"
+  ) %>%
+  row_spec(
+    0,
+    bold = TRUE,
+    color = "black",
+    background = "#f5f5f5",
+    extra_css = "text-align: center;"
+  )
+
+```
+
+
+``` {r age_group_analysis_graph }
+# Construct dynamic title using active parameter values
+
+plot_title <- glue::glue(
+  "⏱️ Average MPG by Age Group\nConference: {conference_label} | Team: {team_label} | Position: {position_label}"
+)
+
+
+ggplot(age_mins,
+       aes(
+         x = reorder(`Age Group`, -`Average Minutes per Game`),
+         y = `Average Minutes per Game`,
+         fill = `Age Group`
+       )) +
+  geom_col(width = 0.6, show.legend = FALSE) +
+  geom_text(aes(label = `Average Minutes per Game`),
+            vjust = -0.4,
+            size = 4) +
+  labs(title = plot_title, x = "Age Group", y = "Average Minutes per Game") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(size = 12, face = "bold"),
+    axis.title = element_text(size = 10),
+    axis.text = element_text(size = 9)
+  )
+
+```
+
+# 📈 Predicting Minutes Played per Game (MPG) Using Regression
+
+This section presents a multiple linear regression model designed to predict an NBA player's **average minutes played per game (MPG)** based on key performance and demographic indicators. The model uses the following predictors:
+
+- **Age** – Player's chronological age
+- **PTS** – Average points scored per 36 minutes
+- **AST** – Average assists per 36 minutes
+- **TRB** – Average total rebounds per 36 minutes
+
+By modeling MPG as a function of these variables, we aim to understand how both age and on-court performance metrics contribute to a player's average playing time. This is particularly useful for evaluating patterns of player utilization and identifying which traits are most strongly associated with increased minutes.
+
+To ensure the model's accuracy and interpretability:
+- MPG is calculated as total minutes (MP) divided by games played (G), accounting for unequal season participation.
+- Only complete cases (rows without missing values) are included in the regression.
+- All predictors are treated as continuous variables.
+
+The regression output provides estimates of the **magnitude and direction** of each variable's association with MPG, while also offering an **Adjusted R²** value to assess the overall model fit.
+
+Importantly, the data used in the model is dynamically filtered based on the user-defined inputs in the `config.yml` file. The model reflects the subset of players defined by:
+- **Conference** (Eastern, Western, or All)
+- **Team**
+- **Position**
+
+This allows for highly customized analyses, such as:
+- Assessing whether age impacts playing time more heavily among centers than guards
+- Exploring how scoring efficiency relates to playing time for a specific team
+- Comparing predictors of MPG across different conferences
+
+By tailoring the regression model to filtered subsets of the data, this approach supports flexible, targeted analysis that can reveal nuanced insights across different contexts in the NBA.
+
+
+```{r regression_analysis_predict_minutes_played_mpg}
+# Prepare data for regression model by selecting predictors and ensuring MPG is available
+nba_data <- nba_data %>%
+  mutate(MPG = MP / G)
+
+# Select relevant variables and remove rows with missing data
+reg_data <- nba_data %>%
+  select(MPG, Age, PTS, AST, TRB) %>%
+  filter(complete.cases(.))
+
+# Fit a linear regression model to predict MPG based on age, points, assists, and rebounds
+mpg_model <- lm(MPG ~ Age + PTS + AST + TRB, data = reg_data)
+
+# Build dynamic header for model summary
+
+model_heading <- glue::glue(
+  "🧮 Linear Regression Model: Predicting MPG from Age, PTS, AST, TRB\nFilters → Conference: {conference_label}, Team: {team_label}, Position: {position_label}"
+)
+
+
+# Print model heading and summary
+cat(model_heading, "\n\n")
+summary(mpg_model)
+
+``` 
+
+# 📈 Predicted Minutes Played per Game by Age (Model-Based)
+
+This section presents a predictive visualization that estimates how a player’s **average minutes per game (MPG)** are expected to change across different ages, based on the previously fitted linear regression model. The model accounts for both demographic and performance-related variables, including:
+
+- **Age** – Player’s chronological age  
+- **PTS** – Points per 36 minutes  
+- **AST** – Assists per 36 minutes  
+- **TRB** – Total rebounds per 36 minutes
+
+To isolate the effect of **age** on MPG, a synthetic dataset is created in which:
+- Age ranges from the minimum to maximum observed values in the filtered data
+- **PTS**, **AST**, and **TRB** are held constant at their **mean values**
+
+The resulting plot displays a smooth line that represents the **predicted MPG** at each age, assuming average performance in the other three metrics. This approach allows us to interpret **the unique, adjusted effect of age** on playing time without confounding influences from performance differences.
+
+#### 🔧 Dynamic Filtering
+This visualization is responsive to user-defined filters specified in the `config.yml` file:
+- **Conference** (e.g., Western, Eastern, or ALL)
+- **Team** (e.g., LAL, BOS)
+- **Position** (e.g., PG, C)
+
+The model and plot reflect only the subset of players defined by these filters, allowing for targeted analyses such as:
+- Do younger players earn more minutes in the Eastern Conference than in the West?
+- Are older forwards still utilized heavily on specific teams?
+- How does playing time change with age for high-performing guards?
+
+By leveraging the predictive power of the model and controlling for performance, this visualization offers a **clear, focused view of age-related trends** in court time—insights that are difficult to extract from raw averages alone.
+
+
+```{r predicted_mpg_by_age_regres_line}
+# Create a dataset of ages for prediction, holding PTS, AST, TRB constant at their mean values
+prediction_df <- data.frame(
+  Age = seq(min(reg_data$Age), max(reg_data$Age), by = 1),
+  PTS = mean(reg_data$PTS, na.rm = TRUE),
+  AST = mean(reg_data$AST, na.rm = TRUE),
+  TRB = mean(reg_data$TRB, na.rm = TRUE)
+)
+
+# Generate predicted MPG values based on the regression model
+prediction_df$PredictedMPG <- predict(mpg_model, newdata = prediction_df)
+
+# Build dynamic plot title using current filter parameters
+
+plot_title <- glue::glue(
+  "📈 Predicted MPG by Age (Holding PTS, AST, TRB Constant)\nFilters → Conference: {conference_label} | Team: {team_label} | Position: {position_label}"
+)
+
+# Create the plot
+ggplot(prediction_df, aes(x = Age, y = PredictedMPG)) +
+  geom_line(size = 1.2, color = "#2C3E50") +
+  labs(title = plot_title, x = "Age", y = "Predicted Minutes Per Game") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13),
+    axis.title = element_text(size = 11),
+    axis.text = element_text(color = "black")
+  )
+```
+
+# 🧠 Interpreting the Regression Model: What Drives Playing Time?
+
+This section provides an interpretation of the multiple linear regression model used to predict **average minutes played per game (MPG)** among NBA players. The model estimates the relationship between MPG and four key variables: **Age**, **Points (PTS)**, **Assists (AST)**, and **Total Rebounds (TRB)** — all normalized per 36 minutes of play.
+
+The output offers a detailed summary of:
+- 📊 The **most influential predictor** of MPG, based on the magnitude of its coefficient
+- 🧓 The **direction and strength** of the relationship between age and playing time, controlling for performance
+- 📈 The **Adjusted R²**, indicating the proportion of variation in MPG explained by the model
+- ✅ Which variables are **statistically significant** predictors of playing time (p < 0.05)
+
+Each regression coefficient represents the **expected change in MPG** for a one-unit increase in the predictor, holding all other variables constant. For example, a negative coefficient for Age would imply that, on average, older players tend to play fewer minutes than their younger peers — even when scoring, assisting, and rebounding at the same level.
+
+The interpretation also highlights the **statistically significant variables**, helping to distinguish meaningful relationships from noise. This can guide coaches, analysts, or decision-makers in identifying performance metrics that most reliably correlate with court time.
+
+Like the rest of this analysis, the model is built on a **filtered subset of players**, defined by the configuration parameters in `config.yml`. These include:
+- **Conference** (Eastern, Western, or All)
+- **Team** (e.g., LAL, BOS)
+- **Position** (e.g., PG, C)
+
+By tailoring the model to specific player groups, this interpretation becomes both **context-aware** and **actionable** — offering deeper insights into how player characteristics translate to playing opportunities in different team and league scenarios.
+
+
+```{r regression_interpretation}
+# Extract regression coefficients and organize them for interpretation
+coef_table <- summary(mpg_model)$coefficients
+
+# Identify the variable with the largest absolute effect on MPG (excluding intercept)
+impact_stats <- coef_table[order(-abs(coef_table[, "Estimate"])), , drop = FALSE]
+top_predictor <- rownames(impact_stats)[2]
+
+# Pull model details for reporting
+age_coef <- coef_table["Age", "Estimate"]
+adj_r2 <- summary(mpg_model)$adj.r.squared
+age_effect <- if (age_coef > 0) "increases" else "decreases"
+
+# List statistically significant predictors (p < 0.05)
+sig_predictors <- rownames(coef_table)[coef_table[, "Pr(>|t|)"] < 0.05]
+sig_predictors <- setdiff(sig_predictors, "(Intercept)")
+
+# Create dynamic context string
+
+context_line <- glue::glue(
+  "Filters → Conference: {conference_label} | Team: {team_label} | Position: {position_label}"
+)
+
+# Print interpretation summary using Markdown-style formatting
+cat(
+  glue::glue(
+    "
+🔍 **Regression Summary**
+{context_line}
+
+- 📊 The stat most strongly associated with MPG is **{top_predictor}**
+- 🧓 Age coefficient: **{round(age_coef, 2)}**, which suggests MPG **{age_effect}** with age (holding other stats constant)
+- 📈 Adjusted R-squared: **{round(adj_r2, 3)}**, indicating how well the model explains the data
+
+✅ **Statistically significant predictors (p < 0.05)**:
+{if (length(sig_predictors) > 0) paste('-', sig_predictors, collapse = '\\n') else 'None'}
+"
+  )
+)
+```
+
+ 
