@@ -40,7 +40,7 @@ suppressPackageStartupMessages({
 # Uncomment only ONE block below depending on what you want to test
 
 # --- Use full dataset (no filtering)
-Sys.setenv(WHICH_CONFIG = "default")
+# Sys.setenv(WHICH_CONFIG = "default")
 
 # --- Filter for Western Conference#
 # Sys.setenv(WHICH_CONFIG = "east")
@@ -81,7 +81,8 @@ here::i_am("Ramya_Code/nba_generate_report.Rmd")
 
 
 # Source the script that filters data and saves filtered RDS
-source(here::here("Jeffrey_Code/filter_data.R"))
+  #JG: We want to do this with make, uncomment this to test without make
+#source(here::here("Jeffrey_Code/filter_data.R"))
 
 # Load the filtered dataset
 input_path <- here::here("Clean_Data", "data.rds")

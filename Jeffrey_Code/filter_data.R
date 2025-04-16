@@ -43,7 +43,7 @@ if(config_list$team == "CUSTOM"){
 #Filter for specified position
 if(config_list$position == "CUSTOM"){
   POS = Sys.getenv("POS")
-  AllData = AllData |> filter(Pos==POSITION)
+  AllData = AllData |> filter(Pos==POS)
 }
 
 saveRDS(AllData,here("Clean_Data/data.rds"))
