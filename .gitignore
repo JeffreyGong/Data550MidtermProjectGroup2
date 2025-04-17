@@ -5,3 +5,4 @@
 Clean_Data/*.rds
 *.html
 *.Rproj
+Outputs/*

@@ -85,7 +85,7 @@ here::i_am("Ramya_Code/nba_generate_report.Rmd")
 #source(here::here("Jeffrey_Code/filter_data.R"))
 
 # Load the filtered dataset
-input_path <- here::here("Clean_Data", "data.rds")
+input_path <- here::here(paste0("Clean_Data/data_",WHICH_CONFIG,".rds")) 
 
 
 if (file.exists(input_path)) {

@@ -6,7 +6,7 @@ Group 2
 
 In the terminal, use
 
-> export WHICH_CONFIG = “…”
+> export WHICH_CONFIG=“…”
 
 to choose one of the following configurations:
 
@@ -16,14 +16,14 @@ to choose one of the following configurations:
 4.  one_team: Analysis includes only a specified team. Specify the team
     in the terminal with
 
-> export TEAM = “…”
+> export TEAM=“…”
 
 replacing … with the three letter abbreviation of the desired team.
 
 5.  one_position: Analysis includes only players of a specified
     position. Specify the position in the terminal with
 
-> export POS = “…”
+> export POS=“…”
 
 replacing … with the abbreviation of the desired position(C, PG, SG, PF,
 SF)

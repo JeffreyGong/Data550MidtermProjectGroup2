@@ -4,7 +4,9 @@ library(gtsummary)
 
 here::i_am("Joseph_Code/three_pt_reg.R")
 
-Data <- readRDS(here("Clean_Data/data.rds"))
+WHICH_CONFIG = Sys.getenv("WHICH_CONFIG")
+
+Data <- readRDS(here(file_path = paste0("Clean_Data/data_",WHICH_CONFIG,".rds")))
 
 # Filter out players who attempted less than 10 total three-pointers
 filtered_data <- Data %>%

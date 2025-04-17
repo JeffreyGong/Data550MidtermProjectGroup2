@@ -46,6 +46,8 @@ if(config_list$position == "CUSTOM"){
   AllData = AllData |> filter(Pos==POS)
 }
 
-saveRDS(AllData,here("Clean_Data/data.rds"))
+file_path = paste0("Clean_Data/data_",WHICH_CONFIG,".rds")
+
+saveRDS(AllData,here(file_path))
 
 

@@ -2,10 +2,33 @@
 title: "Data 550 Midterm Report: NBA Stats"
 author: "Midterm Group 2"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    theme: cosmo
+    df_print: paged
 ---
 
-```{r}
+```{r, set-chunk-opts, include = FALSE}
+library(knitr)
+opts_chunk$set(
+  echo = FALSE, warning = FALSE, message = FALSE
+)
+```
 
+```{r, child-reports}
+#| child = c("Ramya_Code/nba_generate_report.Rmd")
+```
+
+# Regression Analysis: Relationship of 3 Point Attempts to Points Per Game
+
+```{r}
+here::i_am("report.Rmd")
+
+knitr::include_graphics(
+  here::here("Outputs/three_pt_regression_plot.png")
+)
 ```
 
