@@ -27,3 +27,7 @@ replacing … with the three letter abbreviation of the desired team.
 
 replacing … with the abbreviation of the desired position(C, PG, SG, PF,
 SF)
+
+Then, use the following command to create report.html:
+
+> make
