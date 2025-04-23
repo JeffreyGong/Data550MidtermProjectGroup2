@@ -22,13 +22,38 @@ opts_chunk$set(
 #| child = c("Ramya_Code/nba_generate_report.Rmd")
 ```
 
-# Regression Analysis: Relationship of 3 Point Attempts to Points Per Game
+# 📊 Regression Analysis: 3-Point Attempts vs. Total Points
 
-```{r}
-here::i_am("report.Rmd")
+We test the hypothesis that players who take more three-point shots tend to score more total points over a season (after removing anyone with fewer than 10 attempts).
 
-knitr::include_graphics(
-  here::here("Outputs/three_pt_regression_plot.png")
-)
+## Regression Results
+
+```{r three_pt_reg_table, echo=FALSE, message=FALSE, warning=FALSE}
+library(here)
+library(gtsummary)
+
+# Load the saved gtsummary object
+reg_table <- readRDS(here("Outputs/3pts_reg_table.rds"))
+
+# Render it as an HTML table
+reg_table
 ```
 
+##Table interpretation:
+
+*Estimate shows the intercept and the slope for X3PA (three-point attempts).
+*The Std. Error and t value assess the precision of those estimates.
+*The Pr(>|t|) p-value for X3PA tells us if the relationship is statistically significant (< 0.05).
+
+## Scatter Plot
+```{r}
+
+library(knitr)
+
+knitr::include_graphics(here("Outputs/three_pt_regression_plot.png"))
+```
+
+## Plot interpretation:
+
+Each dot represents one player’s season: x = number of three-point attempts, y = total points scored.
+The blue line is the linear “best fit.” 
