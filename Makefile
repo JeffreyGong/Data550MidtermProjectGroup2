@@ -11,3 +11,7 @@ clean:
 	rm Clean_Data/*.rds && \
 	rm Outputs/*.rds && \
 	rm Outputs/*.png
+	
+.PHONY: install
+install:
+	Rscript -e "renv::restore(prompt=FALSE)"
