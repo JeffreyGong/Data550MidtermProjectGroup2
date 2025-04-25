@@ -31,3 +31,7 @@ SF)
 Then, use the following command to create report.html:
 
 > make
+
+When creating a report with different configurations, if the terminal says the report is up to date, run the following command:
+
+> make clean
