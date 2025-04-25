@@ -39,7 +39,7 @@ reg_table <- readRDS(here("Outputs/3pts_reg_table.rds"))
 reg_table
 ```
 
-##Table interpretation:
+## Table interpretation:
 
 *Estimate shows the intercept and the slope for X3PA (three-point attempts).
 *The Std. Error and t value assess the precision of those estimates.
